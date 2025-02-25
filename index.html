@@ -1,279 +1,30 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Box Breathing - 16s Square Clock + Smooth Mandala</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      html, body {
-        width: 100%;
-        height: 100%;
-      }
-      body {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f0f9ff;
-      }
-
-      /* The main container for everything, sized responsively up to 300px */
-      #bubble-container {
-        position: relative;
-        width: clamp(300px, 120vw, 450px);
-        height: clamp(300px, 120vw, 450px);
-      }
-
-      /* The mandala (SVG) we'll scale smoothly for each phase. */
-      #bubble-svg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-      .mandala-stroke {
-        fill: none;
-        stroke: #87ceeb; /* calm sky-blue */
-        stroke-width: 2;
-      }
-
-      /* The square clock in the exact center of the container. */
-      #square {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 100px;
-        height: 100px;
-        border: 3px solid #333;
-      }
-
-      /* The dot indicator that moves around the square's perimeter. */
-      #indicator {
-        position: absolute;
-        width: 15px;
-        height: 15px;
-        border-radius: 50%;
-        background: #333;
-        /* We'll shift the dot by -5px so it centers on the line. */
-        transform: translate(-7.5px, -7.5px);
-      }
-    </style>
-  </head>
-  <body>
-    <div id="bubble-container">
-      <!-- The mandala -->
-      <svg id="bubble-svg" viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
-        <g transform="translate(100,100)">
-          <!-- 8 petals revolve around radius=40 -->
-          <path
-            class="mandala-stroke"
-            d="M 0,-40
-               C 15,-60 35,-60 40,-40
-               C 45,-20 15,-20 0,-40
-               Z"
-            transform="rotate(0)"
-          />
-          <path
-            class="mandala-stroke"
-            d="M 0,-40
-               C 15,-60 35,-60 40,-40
-               C 45,-20 15,-20 0,-40
-               Z"
-            transform="rotate(45)"
-          />
-          <path
-            class="mandala-stroke"
-            d="M 0,-40
-               C 15,-60 35,-60 40,-40
-               C 45,-20 15,-20 0,-40
-               Z"
-            transform="rotate(90)"
-          />
-          <path
-            class="mandala-stroke"
-            d="M 0,-40
-               C 15,-60 35,-60 40,-40
-               C 45,-20 15,-20 0,-40
-               Z"
-            transform="rotate(135)"
-          />
-          <path
-            class="mandala-stroke"
-            d="M 0,-40
-               C 15,-60 35,-60 40,-40
-               C 45,-20 15,-20 0,-40
-               Z"
-            transform="rotate(180)"
-          />
-          <path
-            class="mandala-stroke"
-            d="M 0,-40
-               C 15,-60 35,-60 40,-40
-               C 45,-20 15,-20 0,-40
-               Z"
-            transform="rotate(225)"
-          />
-          <path
-            class="mandala-stroke"
-            d="M 0,-40
-               C 15,-60 35,-60 40,-40
-               C 45,-20 15,-20 0,-40
-               Z"
-            transform="rotate(270)"
-          />
-          <path
-            class="mandala-stroke"
-            d="M 0,-40
-               C 15,-60 35,-60 40,-40
-               C 45,-20 15,-20 0,-40
-               Z"
-            transform="rotate(315)"
-          />
-        </g>
-      </svg>
-
-      <!-- The center square clock -->
-      <div id="square">
-        <div id="indicator"></div>
-      </div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box Breathing Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Box Breathing</h1>
+        <div class="progress-bar">
+            <div class="progress-bar-fill"></div>
+        </div>
+        <div class="breathing-container">
+            <div class="mandala">
+                <div class="circle outer"></div>
+                <div class="circle inner"></div>
+                <div class="geometric-pattern">
+                    <div class="diamond"></div>
+                    <div class="diamond rotated"></div>
+                </div>
+                <button id="startButton" class="start-button" onclick="startBreathing()">Start</button>
+            </div>
+            <div class="instruction">Press Start</div>
+        </div>
     </div>
-
-    <script>
-      /**
-       * We have a 16-second box breathing cycle:
-       *   0..4s:   Inhale  (scale from 1->3, smoothly)
-       *   4..8s:   Hold    (scale stays at 3)
-       *   8..12s:  Exhale  (scale from 3->1, smoothly)
-       *   12..16s: Hold    (scale stays at 1)
-       * Meanwhile, a small dot moves around the 4 edges of the #square, one step per second,
-       * for 16 total steps.
-       * We repeat these cycles until we reach 3 minutes (180s).
-       */
-
-      const bubbleSvg = document.getElementById('bubble-svg');
-      const square = document.getElementById('square');
-      const indicator = document.getElementById('indicator');
-
-      // 3-minute limit
-      const maxTime = 180;
-      let elapsedSeconds = 0; // total seconds so far
-
-      // We'll handle the mandala in 16-second cycles, repeating.
-      // The dot also moves 1 step each second for 16 steps.
-      let step = 0; // 0..15 around the square
-      let intervalId = null;
-
-      // For the mandala scale, each new 16s cycle we do a set of timeouts.
-      // But let's do it simpler: every second, we figure out the scale from step.
-
-      function updateIndicator() {
-        // The square is 60x60. We have 16 steps around perimeter.
-        // Each side = 4 steps.
-        const w = square.clientWidth;
-        const h = square.clientHeight;
-        const sideSteps = 4;
-        const segW = w / sideSteps;
-        const segH = h / sideSteps;
-
-        let x = 0, y = 0;
-        if (step >= 0 && step <= 3) {
-          // top edge: left->right
-          x = segW * step;
-          y = 0;
-        } else if (step >= 4 && step <= 7) {
-          // right edge: top->bottom
-          x = w;
-          y = segH * (step - 4);
-        } else if (step >= 8 && step <= 11) {
-          // bottom edge: right->left
-          x = w - segW * (step - 8);
-          y = h;
-        } else {
-          // step 12..15 => left edge: bottom->top
-          x = 0;
-          y = h - segH * (step - 12);
-        }
-
-        // We offset by -5 in CSS so the dot is centered on the edge line.
-        indicator.style.transform = `translate(${x - 7.5}px, ${y - 7.5}px)`;
-      }
-
-      function updateMandalaScale() {
-        // We want a continuous scale over 4s for inhale/exhale, and hold stable.
-        // We'll figure out which 4s segment (phase) we are in by step//4.
-        // Then how far into that 4s are we by step%4.
-
-        const localPhase = Math.floor(step / 4); // 0..3
-        const localOffset = step % 4; // 0..3
-
-        // We do a linear approach: we also consider partial seconds.
-        // But we have step changes only once a second. For a truly smooth approach,
-        // we can do a transition from the start of each phase. Let's do that.
-
-        // If step is exactly 0, we begin Inhale => scale(1->3) with a 4s linear transition.
-        // If step is exactly 4, hold => instantly scale(3->3) (no movement)
-        // if step=8 => exhale => scale(3->1)
-        // if step=12 => hold => scale(1->1)
-
-        // We'll do that logic in a function that triggers when step hits 0,4,8,12.
-      }
-
-      function triggerPhaseTransitions() {
-        // step in [0,4,8,12]
-        const s = step % 16; // 0..15
-        if (s === 0) {
-          // Inhale: scale 1->3 over 4s
-          bubbleSvg.style.transition = 'transform 4s linear';
-          bubbleSvg.style.transform = 'scale(3.0)';
-        } else if (s === 4) {
-          // hold at 3
-          bubbleSvg.style.transition = 'transform 0s';
-          bubbleSvg.style.transform = 'scale(3.0)';
-        } else if (s === 8) {
-          // exhale: scale 3->1 over 4s
-          bubbleSvg.style.transition = 'transform 4s linear';
-          bubbleSvg.style.transform = 'scale(1.0)';
-        } else if (s === 12) {
-          // hold at 1
-          bubbleSvg.style.transition = 'transform 0s';
-          bubbleSvg.style.transform = 'scale(1.0)';
-        }
-      }
-
-      function tick() {
-        // If we exceed 180s, end.
-        if (elapsedSeconds >= maxTime) {
-          clearInterval(intervalId);
-          bubbleSvg.style.transition = 'transform 2s ease-in-out';
-          bubbleSvg.style.transform = 'scale(1.0)';
-          return;
-        }
-
-        // Each second, we move the dot => step++
-        // If step=0,4,8,12 => triggers next phase.
-        triggerPhaseTransitions();
-        updateIndicator();
-
-        step = (step + 1) % 16; // move to next step around the square
-        elapsedSeconds++;
-      }
-
-      function start() {
-        // Initially, set scale to 1.
-        bubbleSvg.style.transform = 'scale(1.0)';
-        step = 0;
-        elapsedSeconds = 0;
-        // start an interval every 1 second.
-        intervalId = setInterval(tick, 1000);
-      }
-
-      start();
-
-    </script>
-  </body>
+    <script src="script.js"></script>
+</body>
 </html>
