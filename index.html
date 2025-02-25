@@ -23,8 +23,8 @@
       /* The main container for everything, sized responsively up to 300px */
       #bubble-container {
         position: relative;
-        width: clamp(200px, 80vw, 300px);
-        height: clamp(200px, 80vw, 300px);
+        width: clamp(300px, 120vw, 450px);
+        height: clamp(300px, 120vw, 450px);
       }
 
       /* The mandala (SVG) we'll scale smoothly for each phase. */
@@ -47,20 +47,20 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 60px;
-        height: 60px;
-        border: 2px solid #333;
+        width: 100px;
+        height: 100px;
+        border: 3px solid #333;
       }
 
       /* The dot indicator that moves around the square's perimeter. */
       #indicator {
         position: absolute;
-        width: 10px;
-        height: 10px;
+        width: 15px;
+        height: 15px;
         border-radius: 50%;
         background: #333;
         /* We'll shift the dot by -5px so it centers on the line. */
-        transform: translate(-5px, -5px);
+        transform: translate(-7.5px, -7.5px);
       }
     </style>
   </head>
@@ -200,7 +200,7 @@
         }
 
         // We offset by -5 in CSS so the dot is centered on the edge line.
-        indicator.style.transform = `translate(${x - 5}px, ${y - 5}px)`;
+        indicator.style.transform = `translate(${x - 7.5}px, ${y - 7.5}px)`;
       }
 
       function updateMandalaScale() {
