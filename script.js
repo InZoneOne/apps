@@ -1,7 +1,7 @@
 const instruction = document.querySelector('.instruction');
 const mandala = document.querySelector('.mandala');
 const progressRing = document.querySelector('.progress-ring');
-const TOTAL_DURATION = 120000; // 2 minutes in milliseconds
+const TOTAL_DURATION = 16 * 8 * 1000; // 2 mins + 8 seconds in milliseconds
 let startTime;
 let progressAnimation;
 
