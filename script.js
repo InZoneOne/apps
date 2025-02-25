@@ -6,10 +6,10 @@ let startTime;
 let progressAnimation;
 
 const phases = [
-    { text: 'Inhale', duration: 4000, state: 'expanding' },
-    { text: 'Hold', duration: 4000, state: 'expanded' },
-    { text: 'Exhale', duration: 4000, state: 'contracting' },
-    { text: 'Hold', duration: 4000, state: 'contracted' }
+    { text: 'breathe in', duration: 4000, state: 'expanding' },
+    { text: 'hold', duration: 4000, state: 'expanded' },
+    { text: 'breathe out', duration: 4000, state: 'contracting' },
+    { text: 'hold', duration: 4000, state: 'contracted' }
 ];
 
 let currentPhase = 3;
@@ -37,7 +37,7 @@ function stopBreathing() {
     cancelAnimationFrame(progressAnimation);
     document.getElementById('startButton').style.display = 'block';
     mandala.className = 'mandala contracted';
-    instruction.textContent = 'Press Start';
+    instruction.textContent = 'press start';
     
     // Reset progress bar
     const progressBar = document.querySelector('.progress-bar-fill');
@@ -71,4 +71,4 @@ function updateInstruction() {
 
 // Initial state
 mandala.className = 'mandala contracted';
-instruction.textContent = 'Press Start';
+instruction.textContent = 'press start';
